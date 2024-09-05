@@ -1,0 +1,51 @@
+services:
+
+  traefik:
+    image: "traefik:v3.1"
+    container_name: "traefik"
+    hostname: "traefik"
+    command:
+      - --api.dashboard=true
+      - --log.level=INFO
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entryPoints.web.address=:80
+      - --entryPoints.websecure.address=:443
+      - --entrypoints.websecure.asDefault=true
+      - --entrypoints.websecure.http.tls.certresolver=myresolver
+      #- "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      #- "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+      #- "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+      - --certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+      - --certificatesresolvers.myresolver.acme.dnschallenge=true
+      - --certificatesresolvers.myresolver.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.myresolver.acme.email=exemple@exemple.com
+      - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    environment:
+      - "CF_API_EMAIL=addyou@cloudflare.mail"
+      - "CF_API_KEY=add-you-cloudflare-apikey"
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.mydashboard.rule=Host(`traefik.adddomain.com`)
+      - traefik.http.routers.mydashboard.service=api@internal
+      - traefik.http.routers.mydashboard.middlewares=myauth
+      - traefik.http.middlewares.myauth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/
+  whoami:
+    image: "traefik/whoami"
+    container_name: "whoami"
+    hostname: "whoami"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.adddomain.com`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.tls.certresolver=myresolver"
+#      - "traefik.http.routers.whoami.rule=Host(`whoami.docker.localhost`)"
+#      - "traefik.http.routers.whoami.entrypoints=web"
