@@ -1,0 +1,51 @@
+services:
+  plex:
+    image: plexinc/pms-docker:latest
+    container_name: plex
+    hostname: plex
+    networks:
+      - traefik_default
+    ports:
+      - 1900/udp
+      - 32400/tcp
+      - 32410/udp
+      - 32412/udp
+      - 32413/udp
+      - 32414/udp
+      - 32469/tcp
+      - 8324/tcp
+    # Uncomment the devices section for tv tuners and intel gpus
+    devices:
+      - /dev/dri:/dev/dri # Uncomment this to use intel GPUs for Hardware Transcoding
+    environment:
+      - PLEX_UID=1000
+      - PLEX_GID=1000
+      - TZ=Europe/Stockholm # Change this to match your server's timezone
+      - PLEX_CLAIM=[claim-token] # Uncomment this to setup Plex server, get your claim code from here - https://www.plex.tv/claim/
+      # Uncomment the lines below to use Nvidia GPUs for Hardware Transcoding
+#      - NVIDIA_VISIBLE_DEVICES=all
+#      - NVIDIA_DRIVER_CAPABILITIES=all
+    volumes:
+      - /etc/localtime:/etc/localtime:ro # Sync the container's time to the host's time
+      - /dev/shm:/dev/shm
+      - /opt/appdata/plex:/config
+      - /mnt:/mnt
+      - /mnt/disk1/transcode:/mnt/transcode
+    restart: unless-stopped
+    # Uncomment the lines below to use Nvidia GPUs for Hardware Transcoding
+#    deploy:
+#      resources:
+#        reservations:
+#          devices:
+#            - driver: nvidia
+#              count: 1
+#              capabilities: [gpu]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik_default
+      - traefik.http.routers.plex.entrypoints=websecure
+      - traefik.http.routers.plex.rule=Host(`plex.adddomain.com`)
+      - traefik.http.services.plex.loadbalancer.server.port=32400
+networks:
+  traefik_default:
+    external: true
