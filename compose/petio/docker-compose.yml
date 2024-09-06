@@ -1,0 +1,36 @@
+services:
+    petio:
+        image: ghcr.io/petio-team/petio:latest
+        container_name: petio
+        hostname: petio
+        ports:
+            - '7777:7777'
+        networks:
+            - traefik_default
+        user: '1000:1000'
+        depends_on:
+            - mongo
+        environment:
+            - TZ=Europe/Stockholm
+        volumes:
+            - ./config:/app/api/config
+            - ./logs:/app/logs
+        labels:
+            - traefik.enable=true
+            - traefik.docker.network=traefik_default
+            - traefik.http.routers.petio.entrypoints=websecure
+            - traefik.http.routers.petio.rule=Host(`petio.adddomain.con`)
+            - traefik.http.services.petio.loadbalancer.server.port=7777
+
+    mongo:
+        image: mongo:4.4
+        container_name: mongo
+        hostname: mongo
+        networks:
+            - traefik_default
+        user: '1000:1000'
+        volumes:
+            - ./db:/data/db
+networks:
+  traefik_default:
+    external: true
