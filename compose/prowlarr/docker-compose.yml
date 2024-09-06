@@ -1,0 +1,29 @@
+# git clone https://github.com/dreulavelle/Prowlarr-Indexers.git prowlarr
+services:
+  prowlarr:
+    container_name: prowlarr
+    hostname: prowlarr
+    image: lscr.io/linuxserver/prowlarr:latest
+    networks:
+      - traefik_default
+    ports:
+      - 9696/tcp
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Stockholm
+    volumes:
+      - /opt/appdata/prowlarr:/config
+      - ./Custom:/config/Definitions/Custom
+      - /mnt:/mnt
+    restart: unless-stopped
+    labels:
+    - traefik.enable=true
+    - traefik.docker.network=traefik_default
+    - traefik.http.routers.prowlarr.entrypoints=websecure
+    - traefik.http.routers.prowlarr.rule=Host(`prowlarr.adddomain.com`)
+    - traefik.http.services.prowlarr.loadbalancer.server.port=9696
+
+networks:
+  traefik_default:
+    external: true
