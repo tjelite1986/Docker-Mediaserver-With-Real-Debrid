@@ -1,0 +1,29 @@
+services:
+  sonarr:
+    container_name: sonarr
+    hostname: sonarr
+    image: ghcr.io/hotio/sonarr:release
+    networks:
+      - traefik_default
+    ports:
+      - 8989/tcp
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Stockholm
+    volumes:
+      - /mnt:/mnt
+      - /opt/appdata/sonarr:/config
+      - /opt/appdata/scripts:/scripts
+      - /usr/bin/rclone:/usr/bin/rclone
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik_default
+      - traefik.http.routers.sonarr.entrypoints=websecure
+      - traefik.http.routers.sonarr.rule=Host(`sonarr.adddomain.com`)
+      - traefik.http.services.sonarr.loadbalancer.server.port=8989
+
+networks:
+  traefik_default:
+    external: true
